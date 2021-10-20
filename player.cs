@@ -8,14 +8,15 @@ public class player : KinematicBody2D
 	const int MAXFALLSPEED = 200;
 	const int MAXSPEED = 100;
 	const int JUMPFORCE = 300;
-	
-	bool state = false;
 
 	const int ACCEL = 10;
 	Vector2 vZero = new Vector2();
 
 	bool facing_right = true;
-
+	
+	enum states {NOT_ATTACKING, ATTACKING, AIRBORNE};
+	
+	states currentState = states.NOT_ATTACKING;
 
 	Vector2 motion = new Vector2();
 
@@ -43,50 +44,66 @@ public class player : KinematicBody2D
 		}
 
 		 motion.x = motion.Clamped(MAXSPEED).x;
-
-		if (Input.IsActionPressed("attack")) {
-			if (IsOnFloor()) {
-				motion.x = 0;
-				do
-				{
-					animPlayer.Play("Attack");
-				} while (animPlayer.GetCurrentAnimationPosition() < animPlayer.GetCurrentAnimationLength());
-			}
-		} else if (Input.IsActionPressed("ui_right")) {
-			motion.x += ACCEL;
-			facing_right = true;
-			animPlayer.Play("Run");
-		} else if (Input.IsActionPressed("ui_left")) {
-			motion.x -= ACCEL;
-			facing_right = false;
-			animPlayer.Play("Run");
-		} else {
-			motion = motion.LinearInterpolate(Vector2.Zero, 0.2f);
-			animPlayer.Play("Idle");
-		}
 		
-		if (IsOnFloor())
+		switch (currentState)
 		{
-			if (Input.IsActionPressed("attack")) {
-				motion.x = 0;
-			animPlayer.Play("Attack");
-			}
-		}
-
-		if (IsOnFloor())
-			// On ne regarde qu'un seul fois et non le maintient de la touche
-			if (Input.IsActionJustPressed("ui_jump")) {
-				motion.y = -JUMPFORCE;
-				GD.Print($"motion.y = {motion.y}");
-				Console.WriteLine($"motion.y = {motion.y}");
-			}
-
-		if (!IsOnFloor()) {
-			if (motion.y < 0) {
-				animPlayer.Play("jump");
-			} else if (motion.y > 0) {
-				animPlayer.Play("fall");
-			}
+			case states.NOT_ATTACKING:
+				if (Input.IsActionPressed("attack")) {
+					if (IsOnFloor()) {
+						motion = motion.LinearInterpolate(Vector2.Zero, 0.2f);
+						currentState = states.ATTACKING;
+					}
+				} else if (Input.IsActionPressed("ui_right")) {
+					motion.x += ACCEL;
+					facing_right = true;
+					animPlayer.Play("Run");
+				} else if (Input.IsActionPressed("ui_left")) {
+					motion.x -= ACCEL;
+					facing_right = false;
+					animPlayer.Play("Run");
+				} else {
+					motion = motion.LinearInterpolate(Vector2.Zero, 0.2f);
+					animPlayer.Play("Idle");
+				}
+				if (IsOnFloor())
+					// On ne regarde qu'un seul fois et non le maintient de la touche
+					if (Input.IsActionJustPressed("ui_jump")) {
+						motion.y = -JUMPFORCE;
+						GD.Print($"motion.y = {motion.y}");
+						Console.WriteLine($"motion.y = {motion.y}");
+						currentState = states.AIRBORNE;
+					}
+				break;
+				
+			case states.ATTACKING:
+				if(animPlayer.CurrentAnimationPosition < animPlayer.CurrentAnimationLength)
+				{
+					motion.x = 0;
+					animPlayer.Play("Attack");
+				}
+				else
+					currentState = states.NOT_ATTACKING;
+					
+				GD.Print($"position = {animPlayer.CurrentAnimationPosition} length = {animPlayer.CurrentAnimationLength}");
+				break;
+			
+			case states.AIRBORNE:
+				if (!IsOnFloor()) {
+					if (motion.y < 0) {
+						animPlayer.Play("jump");
+					} else if (motion.y > 0) {
+						animPlayer.Play("fall");
+					}
+					if (Input.IsActionPressed("ui_right")) {
+						motion.x += ACCEL;
+						facing_right = true;
+					} else if (Input.IsActionPressed("ui_left")) {
+						motion.x -= ACCEL;
+						facing_right = false;
+					}
+				}
+				else currentState = states.NOT_ATTACKING;
+			break;
 		}
 
 		motion = MoveAndSlide(motion, UP);
