@@ -8,6 +8,8 @@ public class player : KinematicBody2D
 	const int MAXFALLSPEED = 200;
 	const int MAXSPEED = 100;
 	const int JUMPFORCE = 300;
+	
+	bool state = false;
 
 	const int ACCEL = 10;
 	Vector2 vZero = new Vector2();
@@ -42,13 +44,21 @@ public class player : KinematicBody2D
 
 		 motion.x = motion.Clamped(MAXSPEED).x;
 
-		if (Input.IsActionPressed("ui_left")) {
-			motion.x -= ACCEL;
-			facing_right = false;
-			animPlayer.Play("Run");
+		if (Input.IsActionPressed("attack")) {
+			if (IsOnFloor()) {
+				motion.x = 0;
+				do
+				{
+					animPlayer.Play("Attack");
+				} while (animPlayer.GetCurrentAnimationPosition() < animPlayer.GetCurrentAnimationLength());
+			}
 		} else if (Input.IsActionPressed("ui_right")) {
 			motion.x += ACCEL;
 			facing_right = true;
+			animPlayer.Play("Run");
+		} else if (Input.IsActionPressed("ui_left")) {
+			motion.x -= ACCEL;
+			facing_right = false;
 			animPlayer.Play("Run");
 		} else {
 			motion = motion.LinearInterpolate(Vector2.Zero, 0.2f);
@@ -57,7 +67,8 @@ public class player : KinematicBody2D
 		
 		if (IsOnFloor())
 		{
-			if (Input.IsActionPressed("j")) {
+			if (Input.IsActionPressed("attack")) {
+				motion.x = 0;
 			animPlayer.Play("Attack");
 			}
 		}

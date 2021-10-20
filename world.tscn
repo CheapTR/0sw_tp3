@@ -10,7 +10,7 @@ height = 3.0
 
 [sub_resource type="Animation" id=6]
 resource_name = "Attack"
-length = 0.5
+length = 0.52
 tracks/0/type = "value"
 tracks/0/path = NodePath("Sprite:frame")
 tracks/0/interp = 1
@@ -112,7 +112,7 @@ __meta__ = {
 texture = ExtResource( 2 )
 hframes = 9
 vframes = 6
-frame = 31
+frame = 32
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="player"]
 position = Vector2( 2.5, 6.5 )
