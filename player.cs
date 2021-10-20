@@ -76,7 +76,8 @@ public class player : KinematicBody2D
 				break;
 				
 			case states.ATTACKING:
-				if(animPlayer.CurrentAnimationPosition < animPlayer.CurrentAnimationLength)
+				if((animPlayer.CurrentAnimationPosition < animPlayer.CurrentAnimationLength) ||
+				(Input.IsActionPressed("attack")))
 				{
 					motion.x = 0;
 					animPlayer.Play("Attack");
@@ -84,7 +85,7 @@ public class player : KinematicBody2D
 				else
 					currentState = states.NOT_ATTACKING;
 					
-				GD.Print($"position = {animPlayer.CurrentAnimationPosition} length = {animPlayer.CurrentAnimationLength}");
+				
 				break;
 			
 			case states.AIRBORNE:
