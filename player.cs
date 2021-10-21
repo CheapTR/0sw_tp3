@@ -13,6 +13,8 @@ public class player : KinematicBody2D
 	Vector2 vZero = new Vector2();
 
 	bool facing_right = true;
+
+	AnimationTree animTree;
 	
 	enum states {NOT_ATTACKING, ATTACKING, AIRBORNE};
 	
@@ -21,12 +23,17 @@ public class player : KinematicBody2D
 	Vector2 motion = new Vector2();
 
 	Sprite currentSprite;
+	
 	AnimationPlayer animPlayer;
+	AnimationNodeStateMachinePlayback animState;
 		// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		currentSprite = GetNode<Sprite>("Sprite");
 		animPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
+		
+		animTree = GetNode<AnimationTree>("AnimationTree");
+		animState = (AnimationNodeStateMachinePlayback)animTree.Get("parameters/playback");
 	}
 
 	public override void _PhysicsProcess(float delta)
@@ -48,6 +55,7 @@ public class player : KinematicBody2D
 		switch (currentState)
 		{
 			case states.NOT_ATTACKING:
+				var input_vector = Vector2.Zero;
 				if (Input.IsActionPressed("attack")) {
 					if (IsOnFloor()) {
 						motion = motion.LinearInterpolate(Vector2.Zero, 0.2f);
@@ -56,14 +64,16 @@ public class player : KinematicBody2D
 				} else if (Input.IsActionPressed("ui_right")) {
 					motion.x += ACCEL;
 					facing_right = true;
-					animPlayer.Play("Run");
+					animState.Travel("Run");
 				} else if (Input.IsActionPressed("ui_left")) {
 					motion.x -= ACCEL;
 					facing_right = false;
-					animPlayer.Play("Run");
+					animState.Travel("Run");
 				} else {
 					motion = motion.LinearInterpolate(Vector2.Zero, 0.2f);
-					animPlayer.Play("Idle");
+					
+					
+					animState.Travel("Idle");
 				}
 				if (IsOnFloor())
 					// On ne regarde qu'un seul fois et non le maintient de la touche
@@ -76,14 +86,11 @@ public class player : KinematicBody2D
 				break;
 				
 			case states.ATTACKING:
-				if((animPlayer.CurrentAnimationPosition < animPlayer.CurrentAnimationLength) ||
-				(Input.IsActionPressed("attack")))
+				if((Input.IsActionPressed("attack")))
 				{
 					motion.x = 0;
-					animPlayer.Play("Attack");
+					animState.Travel("Attack");
 				}
-				else
-					currentState = states.NOT_ATTACKING;
 					
 				
 				break;
@@ -91,9 +98,9 @@ public class player : KinematicBody2D
 			case states.AIRBORNE:
 				if (!IsOnFloor()) {
 					if (motion.y < 0) {
-						animPlayer.Play("jump");
+					animState.Travel("Jump");
 					} else if (motion.y > 0) {
-						animPlayer.Play("fall");
+					animState.Travel("Falling");
 					}
 					if (Input.IsActionPressed("ui_right")) {
 						motion.x += ACCEL;
@@ -108,6 +115,11 @@ public class player : KinematicBody2D
 		}
 
 		motion = MoveAndSlide(motion, UP);
+	}
+	
+	public void attack_animation_finished()
+	{
+		currentState = states.NOT_ATTACKING;
 	}
 
 
